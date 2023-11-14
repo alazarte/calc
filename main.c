@@ -4,10 +4,17 @@
 
 #define SIZE 100
 
+typedef enum OPERATION {
+	O_ADD,
+	O_SUB,
+	O_DIV,
+	O_MUL,
+	O_NIL,
+} Operation;
+
 int numbers[SIZE] = { 0 };
 char buffer[SIZE] = { 0 };
 
-int is_negative = 1;
 int numbers_index = 0;
 
 void print_all_numbers()
@@ -29,7 +36,7 @@ char isin(char c, char *in)
 	return 0;
 }
 
-void perform_operation(char op)
+void perform_operation(Operation op)
 {
 	if (numbers_index <= 1) {
 		printf("ERROR: not enough numbers to operate\n");
@@ -41,16 +48,16 @@ void perform_operation(char op)
 	int *b = &numbers[numbers_index];
 
 	switch (op) {
-	case '+':
+	case O_ADD:
 		*a = *b + *a;
 		break;
-	case '-':
+	case O_SUB:
 		*a = *b - *a;
 		break;
-	case '*':
+	case O_MUL:
 		*a = *b * *a;
 		break;
-	case '/':
+	case O_DIV:
 		*a = *b / *a;
 		break;
 	}
@@ -68,6 +75,22 @@ void print_debug_info()
 	printf("\n");
 }
 
+Operation switch_op_char(char ch)
+{
+	switch (ch) {
+	case '+':
+		return O_ADD;
+	case '-':
+		return O_SUB;
+	case '*':
+		return O_MUL;
+	case '/':
+		return O_DIV;
+	default:
+		return O_NIL;
+	}
+}
+
 int main(int argn, char **argv)
 {
 	char c;
@@ -80,7 +103,9 @@ int main(int argn, char **argv)
 	char parsing_number = 0;
 	// TODO registers?
 	char clean_registers = 0;
+	Operation current_op = O_NIL;
 
+	printf("Refer to README for how to use\n");
 	printf("Clean numbers with =\n");
 
 	for (;;) {
@@ -89,44 +114,42 @@ int main(int argn, char **argv)
 		if (c == EOF)
 			break;
 
-		if (b == buffer && c == '-') {
-			is_negative = -1;
-			continue;
-		}
-
-		if (isin(c, "+-*/")) {
-			perform_operation(c);
-			continue;
-		}
-
 		if (c == '\n' || c == ' ') {
 			if (parsing_number) {
 				// always update current buffer pointer
 				*b = '\0';
-				numbers[numbers_index++] = atoi(buffer) * is_negative;
+
+				int n = atoi(buffer);
+				if (current_op == O_SUB) {
+					n *= -1;
+					current_op = O_NIL;
+				}
+
+				numbers[numbers_index++] = n;
 				b = buffer;
 
-				is_negative = 1;
 				parsing_number = !parsing_number;
+			} else {
+				if (current_op != O_NIL) {
+					perform_operation(current_op);
+					current_op = O_NIL;
+				}
 			}
 		}
 
 		if (c == '\n') {
 			if (clean_registers) {
 				numbers_index = 0;
-				is_negative = 1;
 				clean_registers = 0;
+				current_op = O_NIL;
 			}
 
-			// TODO well, when performing operation '-', it thinks a
-			// negative number is going to be specified, so is ignored
-			if (is_negative == -1) {
-				perform_operation('-');
-				is_negative = 1;
-			}
-
-			// print_debug_info();
 			print_all_numbers();
+			continue;
+		}
+
+		if (isin(c, "+-*/")) {
+			current_op = switch_op_char(c);
 			continue;
 		}
 
