@@ -46,4 +46,5 @@ Then write `+` and hit enter, the program should print:
 [ 1 5 ]
 ```
 
-It adds the last 2 numbers from right to left, so `3 + 2`.
+It adds the last 2 numbers from right to left, so `3 + 2`. Supported operations
+are `+`, `-`, `*`, `/`.

@@ -58,6 +58,11 @@ void perform_operation(Operation op)
 		*a = *b * *a;
 		break;
 	case O_DIV:
+		if (*a == 0) {
+			printf("ARE YOU INSANE?!\n");
+			numbers_index++;
+			return;
+		}
 		*a = *b / *a;
 		break;
 	}
