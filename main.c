@@ -12,16 +12,17 @@ typedef enum OPERATION {
 	O_NIL,
 } Operation;
 
-int numbers[SIZE] = { 0 };
-char buffer[SIZE] = { 0 };
+double numbers[SIZE] = { 0 };
 
 int numbers_index = 0;
 
-void print_all_numbers()
+void print_all_numbers(int decimals)
 {
+	char buffer[30] = { 0 };
 	printf("[ ");
 	for (int i = 0; i < numbers_index; i++) {
-		printf("%d ", numbers[i]);
+		sprintf(buffer, "%%.%df ", decimals);
+		printf(buffer, numbers[i]);
 	}
 	printf("]\n");
 }
@@ -44,8 +45,8 @@ void perform_operation(Operation op)
 	}
 
 	numbers_index--;
-	int *a = &numbers[numbers_index - 1];
-	int *b = &numbers[numbers_index];
+	double *a = &numbers[numbers_index - 1];
+	double *b = &numbers[numbers_index];
 
 	switch (op) {
 	case O_ADD:
@@ -99,16 +100,23 @@ Operation switch_op_char(char ch)
 int main(int argn, char **argv)
 {
 	char c;
-	char *b = buffer;
-	// to avoid parsing a number when performing an operation
-	// if the line only contains a '+' for example, should
-	// only perform a adding operation, but not try to parse a
-	// number from the buffer, I don't like this, find some
-	// other way
 	char parsing_number = 0;
 	// TODO registers?
 	char clean_registers = 0;
 	Operation current_op = O_NIL;
+	char decimal_part = 0;
+	int decimals = 0;
+	double decimal_modifier = .1;
+	double current_number = 0;
+
+	if (argn > 1) {
+		if (strcmp(argv[1], "-d") == 0) {
+			decimals = atoi(argv[2]);
+		} else {
+			printf("-d for decimals\n");
+			return 1;
+		}
+	}
 
 	printf("Refer to README for how to use\n");
 	printf("Clean numbers with =\n");
@@ -121,19 +129,18 @@ int main(int argn, char **argv)
 
 		if (c == '\n' || c == ' ') {
 			if (parsing_number) {
-				// always update current buffer pointer
-				*b = '\0';
-
-				int n = atoi(buffer);
 				if (current_op == O_SUB) {
-					n *= -1;
+					current_number *= -1;
 					current_op = O_NIL;
 				}
 
-				numbers[numbers_index++] = n;
-				b = buffer;
+				numbers[numbers_index++] = current_number;
+				// b = buffer;
 
-				parsing_number = !parsing_number;
+				parsing_number = 0;
+				decimal_part = 0;
+				current_number = 0;
+				decimal_modifier = .1;
 			} else {
 				if (current_op != O_NIL) {
 					perform_operation(current_op);
@@ -149,7 +156,7 @@ int main(int argn, char **argv)
 				current_op = O_NIL;
 			}
 
-			print_all_numbers();
+			print_all_numbers(decimals);
 			continue;
 		}
 
@@ -158,9 +165,19 @@ int main(int argn, char **argv)
 			continue;
 		}
 
+		if (c == '.') {
+			decimal_part = 1;
+		}
+
 		if (c >= '0' && c <= '9') {
+			if (decimal_part) {
+				current_number += (c-'0') * decimal_modifier;
+				decimal_modifier *= .1;
+			} else {
+				current_number =
+				    (current_number * 10) + (c - '0');
+			}
 			parsing_number = 1;
-			*b++ = c;
 		}
 
 		if (c == '=') {
@@ -168,5 +185,3 @@ int main(int argn, char **argv)
 		}
 	}
 }
-
-// TODO implement decimals
