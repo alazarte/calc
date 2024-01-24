@@ -169,6 +169,15 @@ int main(int argn, char **argv)
 			decimal_part = 1;
 		}
 
+		if (c == 'r') {
+			if (numbers_index < 2)
+				continue;
+			double aux = numbers[numbers_index-1];
+			numbers[numbers_index-1] = numbers[numbers_index-2];
+			numbers[numbers_index-2] = aux;
+			continue;
+		}
+
 		if (c >= '0' && c <= '9') {
 			if (decimal_part) {
 				current_number += (c-'0') * decimal_modifier;
